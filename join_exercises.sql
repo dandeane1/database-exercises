@@ -196,32 +196,72 @@ ORDER BY `Department Name`;
 +------------------+--------------------+
 
 # Find the current titles of employees currently working in the Customer Service department.
-mysql> SELECT titles.title, COUNT(titles.emp_no) AS Total
-           -> FROM titles
-           -> INNER JOIN dept_emp_latest_date ON titles.emp_no = dept_emp_latest_date.emp_no
-           -> AND titles.from_date = dept_emp_latest_date.from_date
-           -> INNER JOIN dept_emp ON dept_emp_latest_date.emp_no = dept_emp.emp_no
-           -> INNER JOIN departments ON dept_emp.dept_no = departments.dept_no
-           -> WHERE departments.dept_name = 'Customer Service'
-           -> AND titles.to_date = '9999-01-01'
-           -> AND dept_emp_latest_date.to_date = '9999-01-01'
-           -> GROUP BY titles.title;
-+-----------------+-------+
-| title           | Total |
-+-----------------+-------+
-| Staff           |  2862 |<-----not correct---------->
-| Senior Staff    |  2475 |
-| Senior Engineer |     1 |
-+-----------------+-------+
+SELECT titles.title AS title, COUNT(*) AS Total
+FROM employees
+         JOIN dept_emp ON dept_emp.emp_no = employees.emp_no
+         JOIN titles ON titles.emp_no = employees.emp_no
+         JOIN departments ON departments.dept_no = dept_emp.dept_no
+WHERE departments.dept_name = 'Customer Service'
+  AND dept_emp.to_date = '9999-01-01'
+  AND titles.to_date = '9999-01-01'
+GROUP BY titles.title
+ORDER BY Total DESC;
 
-# should have gotten +--------------------+-------+
-# | title              | Total |
-# +--------------------+-------+
-# | Senior Staff       | 11268 |
-# | Staff              |  3574 |
-# | Senior Engineer    |  1790 |
-# | Engineer           |   627 |
-# | Technique Leader   |   241 |
-# | Assistant Engineer |    68 |
-# | Manager            |     1 |
-# +--------------------+-------+
++--------------------+-------+
+| title              | Total |
++--------------------+-------+
+| Senior Staff       | 11268 |
+| Staff              |  3574 |
+| Senior Engineer    |  1790 |
+| Engineer           |   627 |
+| Technique Leader   |   241 |
+| Assistant Engineer |    68 |
+| Manager            |     1 |
++--------------------+-------+
+
+
+
+# Find the current salary of all current managers.
+mysql> SELECT departments.dept_name AS "Department Name", CONCAT(employees.first_name, ' ', employees.last_name) AS "Department Manager", salaries.salary AS "Salary"
+           -> FROM dept_manager
+           -> INNER JOIN employees ON dept_manager.emp_no = employees.emp_no
+           -> INNER JOIN departments ON dept_manager.dept_no = departments.dept_no
+           -> INNER JOIN salaries ON dept_manager.emp_no = salaries.emp_no
+           -> WHERE dept_manager.to_date = '9999-01-01' AND salaries.to_date = '9999-01-01'
+           -> ORDER BY departments.dept_name ASC;
++--------------------+--------------------+--------+
+| Department Name    | Department Manager | Salary |
++--------------------+--------------------+--------+
+| Customer Service   | Yuchang Weedman    |  58745 |
+| Development        | Leon DasSarma      |  74510 |
+| Finance            | Isamu Legleitner   |  83457 |
+| Human Resources    | Karsten Sigstam    |  65400 |
+| Marketing          | Vishwani Minakawa  | 106491 |
+| Production         | Oscar Ghazalie     |  56654 |
+| Quality Management | Dung Pesch         |  72876 |
+| Research           | Hilary Kambil      |  79393 |
+| Sales              | Hauke Zhang        | 101987 |
++--------------------+--------------------+--------+
+
+
+# Bonus Find the names of all current employees, their department name, and their current manager's name .
+SELECT CONCAT(e.first_name, ' ', e.last_name) AS "Employee Name",
+       d.dept_name AS "Department Name",
+       CONCAT(m.first_name, ' ', m.last_name) AS "Manager Name"
+FROM employees e
+         JOIN dept_emp de ON e.emp_no = de.emp_no
+         JOIN departments d ON de.dept_no = d.dept_no
+         JOIN dept_manager dm ON de.dept_no = dm.dept_no
+         JOIN employees m ON dm.emp_no = m.emp_no
+WHERE de.to_date = '9999-01-01'
+  AND dm.to_date = '9999-01-01';
+
++----------------------+------------------+-----------------+
+| Employee             | Department       | Manager         |
++----------------------+------------------+-----------------+
+| Huan Lortz           | Customer Service | Yuchang Weedman |
+| Basil Tramer         | Customer Service | Yuchang Weedman |
+| Breannda Billingsley | Customer Service | Yuchang Weedman |
+| Jungsoon Syrzycki    | Customer Service | Yuchang Weedman |
+| Yuichiro Swick       | Customer Service | Yuchang Weedman |
+... 240,124 Rows in total
